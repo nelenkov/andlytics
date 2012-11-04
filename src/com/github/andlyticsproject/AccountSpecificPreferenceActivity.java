@@ -1,14 +1,15 @@
-
 package com.github.andlyticsproject;
 
 import java.util.List;
 
+import android.accounts.Account;
+import android.content.ContentResolver;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
-import android.preference.Preference.OnPreferenceChangeListener;
 
 import com.actionbarsherlock.app.SherlockPreferenceActivity;
 import com.actionbarsherlock.view.MenuItem;
@@ -25,6 +26,9 @@ public class AccountSpecificPreferenceActivity extends SherlockPreferenceActivit
 		LoadAppListTaskCompleteListener {
 
 	private String accountName;
+	private Account account;
+
+	private CheckBoxPreference autoSync;
 	private Preference dummyApp;
 	private PreferenceCategory notificationAppList;
 	private PreferenceCategory hiddenAppList;
@@ -35,6 +39,7 @@ public class AccountSpecificPreferenceActivity extends SherlockPreferenceActivit
 		super.onCreate(savedInstanceState);
 
 		accountName = getIntent().getExtras().getString(Constants.AUTH_ACCOUNT_NAME);
+		account = new Account(accountName, "com.google");
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		setTitle(accountName);
@@ -45,9 +50,9 @@ public class AccountSpecificPreferenceActivity extends SherlockPreferenceActivit
 		// Setup auto sync option
 		PreferenceCategory autoSyncCat = (PreferenceCategory) getPreferenceScreen().findPreference(
 				"prefCatAutoSync");
-		CheckBoxPreference autoSync = new CheckBoxPreference(this);
-		autoSync.setKey(Preferences.AUTOSYNC_ENABLE + accountName);
-		autoSync.setDefaultValue(true);
+		autoSync = new CheckBoxPreference(this);
+		autoSync.setPersistent(false);
+		autoSync.setChecked(isSyncAutomatically());
 		autoSync.setTitle(R.string.auto_sync);
 		autoSync.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			@Override
@@ -55,8 +60,10 @@ public class AccountSpecificPreferenceActivity extends SherlockPreferenceActivit
 				AutosyncHandler autosyncHandler = AutosyncHandlerFactory
 						.getInstance(AccountSpecificPreferenceActivity.this);
 				// Toggle auto sync between the sync period and 0
-				autosyncHandler.setAutosyncPeriod(accountName, ((Boolean) newValue) ?
-						Preferences.getAutoSyncPeriod(AccountSpecificPreferenceActivity.this) : 0);
+				autosyncHandler.setAutosyncPeriod(
+						accountName,
+						((Boolean) newValue) ? Preferences
+								.getAutoSyncPeriod(AccountSpecificPreferenceActivity.this) : 0);
 				return true;
 			}
 		});
@@ -97,6 +104,17 @@ public class AccountSpecificPreferenceActivity extends SherlockPreferenceActivit
 				onLoadAppListTaskComplete(apps);
 			}
 		}
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		autoSync.setChecked(isSyncAutomatically());
+	}
+
+	private boolean isSyncAutomatically() {
+		return ContentResolver.getSyncAutomatically(account,
+				Constants.ACCOUNT_AUTHORITY);
 	}
 
 	@Override
@@ -158,11 +176,11 @@ public class AccountSpecificPreferenceActivity extends SherlockPreferenceActivit
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-			case android.R.id.home:
-				finish();
-				return true;
-			default:
-				return super.onOptionsItemSelected(item);
+		case android.R.id.home:
+			finish();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
 		}
 	}
 

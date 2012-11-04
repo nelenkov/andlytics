@@ -74,7 +74,8 @@ public class HttpClientFactory {
 		HttpConnectionParams.setConnectionTimeout(params, timeoutMillis);
 
 		SSLSocketFactory sf = SSLSocketFactory.getSocketFactory();
-		sf.setHostnameVerifier(SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+		// sf.setHostnameVerifier(SSLSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+		sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 		SchemeRegistry registry = new SchemeRegistry();
 		registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
 		registry.register(new Scheme("https", sf, 443));

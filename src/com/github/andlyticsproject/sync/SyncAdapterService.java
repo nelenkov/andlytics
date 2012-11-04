@@ -13,6 +13,7 @@ import android.accounts.OperationCanceledException;
 import android.app.Service;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SyncResult;
@@ -54,6 +55,10 @@ public class SyncAdapterService extends Service {
 		@Override
 		public void onPerformSync(Account account, Bundle extras, String authority,
 				ContentProviderClient provider, SyncResult syncResult) {
+			Log.d(TAG, "***** Master auto sync: " + ContentResolver.getMasterSyncAutomatically());
+			Log.d(TAG,
+					String.format("***** Auto sync for %s: %s", account.name,
+							ContentResolver.getSyncAutomatically(account, authority)));
 			try {
 				SyncAdapterService.performSync(mContext, account, extras, authority, provider,
 						syncResult);
@@ -90,7 +95,7 @@ public class SyncAdapterService extends Service {
 
 			if (console != null) {
 				List<AppInfo> appDownloadInfos = console.getAppInfo(null);
-				// this can also happen if authentication fails and the user 
+				// this can also happen if authentication fails and the user
 				// need to click on a notification to confirm or re-enter
 				// password (e.g., if password changed or 2FA enabled)
 				if (appDownloadInfos.isEmpty()) {
@@ -137,13 +142,12 @@ public class SyncAdapterService extends Service {
 					Log.d(TAG, "Sucessfully synced AdMob stats");
 				}
 
-
 			}
 		} catch (DevConsoleException e) {
 			Log.e(TAG, "error during sync", e);
 		} catch (AdmobException e) {
 			Log.e(TAG, "error during Admob sync", e);
-		} 
+		}
 
 	}
 }
