@@ -23,7 +23,6 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.github.andlyticsproject.sync.AutosyncHandler;
-import com.github.andlyticsproject.sync.AutosyncHandlerFactory;
 
 /**
  * Used for initial login and managing accounts Because of this original legacy
@@ -164,19 +163,19 @@ public class LoginActivity extends SherlockActivity {
 							.getTag();
 					Preferences.saveIsHiddenAccount(getApplicationContext(), account.name,
 							!isChecked);
-					// Enable disable sync
-					AutosyncHandler syncHandler = AutosyncHandlerFactory
-							.getInstance(getApplicationContext());
+					// Enable/disable sync
+					AutosyncHandler syncHandler = new AutosyncHandler();
 					account.hidden = !isChecked;
-					if (account.hidden) {
-						// XXX do we need to do this?
-						syncHandler.setAutosyncPeriod(account.name, 0);
+					// First ensure it has the most recent sync period (excluding disabled state)
+					syncHandler.setAutosyncPeriod(account.name,
+							Preferences.getLastNonZeroAutosyncPeriod(LoginActivity.this));
+					if (isChecked) {
+						// Now make it match the master sync period (including disabled state)
+						syncHandler.setAutosyncPeriod(account.name,
+								Preferences.getAutosyncPeriod(LoginActivity.this));
 					} else {
-						// sync period might have changed, set again
-						if (Preferences.isAutoSyncEnabled(LoginActivity.this, account.name)) {
-							syncHandler.setAutosyncPeriod(account.name,
-									Preferences.getAutoSyncPeriod(LoginActivity.this));
-						}
+						// They are removing the account from Andlytics, disable syncing
+						syncHandler.setAutosyncEnabled(account.name, false);
 					}
 
 					if (manageAccountsMode && (account.name).equals(selectedAccount)) {
